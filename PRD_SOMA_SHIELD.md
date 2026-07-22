@@ -1,0 +1,1126 @@
+# SOMA SHIELD — Product Requirements Document (PRD)
+## Plataforma Inteligente de Segurança com IA
+
+**Versão:** 1.0  
+**Data:** 2026-07-18  
+**Status:** Phase Planning → MVP Implementation  
+**Audience:** Developers, Security Teams, DevOps Engineers
+
+---
+
+## 📋 Índice
+
+1. [Executive Summary](#executive-summary)
+2. [Product Vision & Positioning](#product-vision--positioning)
+3. [Core Features & User Flows](#core-features--user-flows)
+4. [Technical Architecture](#technical-architecture)
+5. [Design System (Apple-Inspired)](#design-system-apple-inspired)
+6. [UI/UX & Micro-Interactions](#uiux--micro-interactions)
+7. [Pages & Screens](#pages--screens)
+8. [Animation & Motion Language](#animation--motion-language)
+9. [Implementation Roadmap](#implementation-roadmap)
+
+---
+
+## Executive Summary
+
+**Soma Shield** é uma plataforma SaaS de análise de segurança alimentada por IA que transforma como desenvolvedores identificam e remediam vulnerabilidades em suas aplicações.
+
+**Diferencial:**
+- ✨ Scanning automatizado de URL (DAST)
+- 🤖 Análise inteligente via Claude API (exploitability assessment)
+- 🔧 Sugestões de fix automáticas (PR generation)
+- 📊 Dashboard cinematográfico com real-time feedback
+- 🎯 Compliance reporting (SOC2, GDPR)
+
+**Target:** Devs que querem segurança sem expertise em pentest | Security teams que precisam automação
+
+---
+
+## Product Vision & Positioning
+
+### The One-Liner
+> "Seu co-piloto de segurança que encontra o que você perdeu antes que a internet encontre"
+
+### Core Promise
+```
+URL → Risk Score (0-100) → Findings → Auto-fix PRs → Deploy com confiança
+```
+
+### Market Position
+```
+         Automated                         Manual
+            ↑
+  Snyk ●━━━┃━━━● Burp Suite
+        (SaaS, rápido)    (profundo, lento)
+            ┃
+        SOMA SHIELD ← Equilibra ambos
+        (rápido + profundo + IA-guided)
+```
+
+---
+
+## Core Features & User Flows
+
+### 🎯 Feature 1: Instant Risk Scoring
+**What:** Dev entra URL → 30s depois vê risk score (0-100)
+
+**Flow:**
+```
+1. Dev: "Scanneia https://app.com"
+2. Soma: Faz requisições (DAST), testa payloads
+3. Claude: Analisa resultados, prioriza achados
+4. Soma: Gera Risk Score
+   - 0-30: Green (secure)
+   - 31-60: Yellow (fix antes de prod)
+   - 61-100: Red (urgent)
+5. Display: Card animado com breaking numbers
+```
+
+**Outputs:**
+- Risk Score (big, bold)
+- Vulnerability breakdown (critical: 3, high: 8, medium: 15)
+- Time to scan
+- Confidence level
+
+---
+
+### 🎯 Feature 2: Finding Details & Evidence
+**What:** Click em vulnerabilidade → vê proof-of-concept + código exploit
+
+**Finding Card:**
+```
+┌─────────────────────────────────────────┐
+│ SQL Injection (Critical)  [CVSS 9.8]    │
+├─────────────────────────────────────────┤
+│ Endpoint: POST /api/users               │
+│ Parameter: email                        │
+│ Status: Exploitable                     │
+├─────────────────────────────────────────┤
+│ Evidence:                               │
+│   Request:  POST /api/users             │
+│   Payload:  email=test' OR '1'='1       │
+│   Response: [5000 users returned]       │
+├─────────────────────────────────────────┤
+│ Remediation: Use parameterized queries  │
+│ CWE: CWE-89                             │
+│ OWASP: A03:2021 – Injection             │
+└─────────────────────────────────────────┘
+```
+
+---
+
+### 🎯 Feature 3: Domain Verification
+**What:** Prova que você pode testar esse domínio (legal + compliance)
+
+**Verification Methods:**
+1. DNS TXT record: `soma-verify=abc123xyz`
+2. File upload: `/soma-verify.txt`
+3. Meta tag: `<meta name="soma-verify" content="abc123xyz">`
+
+**UX:** 3-step wizard com live validation
+
+---
+
+### 🎯 Feature 4: Authorization Terms
+**What:** Legal framework — aceita termos antes de reporte
+
+**Flow:**
+```
+7-Question Gate:
+  1. "You own this domain?" (Yes/No)
+  2. "Authorized to test?" (Yes/No)
+  3. "Any PII in the app?" (Yes/No)
+  4. "Will you disclose findings?" (Yes/No)
+  5. "Responsible disclosure?" (Yes/No)
+  6. "Agree to Soma terms?" (Yes/No)
+  7. "Ready to proceed?" (Yes/No)
+
+If all Yes → Green checkmark + timestamp saved
+If any No → Blocked + explanation
+```
+
+---
+
+### 🎯 Feature 5: Assisted Response (Stage 7)
+**What:** Click "Create PR" → GitHub PR gerada automaticamente
+
+**Auto-generated PR Example:**
+```markdown
+## 🔒 Security Fix: SQL Injection [Critical]
+
+### Vulnerability
+SQL injection em `/api/users?id=`
+
+### What's wrong?
+```python
+query = f"SELECT * FROM users WHERE id = {user_id}"
+```
+Attacker: `1' OR '1'='1` → dumps DB
+
+### How we fix it
+```python
+# Before
+query = f"SELECT * FROM users WHERE id = {user_id}"
+
+# After  
+query = "SELECT * FROM users WHERE id = ?"
+execute(query, [user_id])
+```
+
+### Risk Level
+- Severity: **Critical** (CVSS 9.8)
+- Exploitability: **Trivial** (no auth)
+- Effort to fix: **< 5 min**
+
+### Testing
+- ✅ Unit tests pass
+- ✅ Integration tests pass
+- ✅ No regression
+
+---
+Generated by Soma Shield • Reviewed by Claude
+```
+
+---
+
+### 🎯 Feature 6: Real-time Logs & Streaming
+**What:** Dev vê logs em tempo real enquanto scan roda
+
+**Log Stream (WebSocket):**
+```
+[00:01] 🔍 Starting scan... https://app.com
+[00:03] ✓ Tech stack detected: React + Node + PostgreSQL
+[00:05] 🧪 Testing SQL Injection... (20 payloads)
+[00:12] ⚠️  FOUND: SQL Injection in /api/users
+[00:15] 🧪 Testing XSS... (15 payloads)
+[00:18] ✓ XSS protected (CSP enabled)
+[00:20] 🧪 Testing Auth Bypass...
+[00:28] ⚠️  FOUND: Weak JWT validation
+[00:30] ✅ Scan complete (2 findings)
+```
+
+Each log line appears with fade-in + typewriter effect
+
+---
+
+### 🎯 Feature 7: PDF Reports
+**What:** Professional report export (branded, compliance-ready)
+
+**Report Sections:**
+1. Executive Summary (1 page)
+   - Risk score
+   - Key findings
+   - Remediation timeline
+
+2. Finding Details (1 page per finding)
+   - Description
+   - Evidence
+   - CVSS score
+   - Remediation
+
+3. Compliance Mapping (optional)
+   - OWASP mapping
+   - CWE references
+   - Compliance standards
+
+4. Appendix
+   - Methodology
+   - Scan date/time
+   - Scope
+
+---
+
+## Technical Architecture
+
+### Stack Decision
+
+```
+Frontend:        React 19 + TypeScript + Vite
+                 ├─ Animations: Framer Motion + GSAP
+                 ├─ UI: Radix UI + Tailwind CSS
+                 └─ State: React Router + Context API
+
+Backend:         FastAPI + Python 3.11
+                 ├─ DAST: Custom payload library
+                 ├─ Analysis: Claude API (Opus 4.8)
+                 ├─ DB: PostgreSQL
+                 └─ Jobs: Celery + Redis (async scans)
+
+Infrastructure:  Vercel (frontend) + Heroku/Railway (backend)
+                 ├─ WebSocket: Vercel Edge
+                 ├─ Storage: S3 (reports, evidence)
+                 └─ Auth: OAuth (GitHub, Google)
+```
+
+### API Endpoints
+
+```
+POST   /api/v1/scans                 Create scan
+GET    /api/v1/scans/:id              Get scan status
+GET    /api/v1/scans/:id/findings    Get findings
+POST   /api/v1/findings/:id/fix      Generate PR
+POST   /api/v1/verify-domain         Domain verification
+POST   /api/v1/authorize             7-question gate
+GET    /api/v1/reports/:id           Generate PDF
+WS     /api/v1/scans/:id/logs        Real-time logs
+```
+
+### Database Schema (Core)
+
+```sql
+scans
+  ├─ id (uuid)
+  ├─ user_id (fk)
+  ├─ target_url (string)
+  ├─ risk_score (int 0-100)
+  ├─ status (enum: pending, running, completed, failed)
+  ├─ created_at, updated_at
+  └─ findings_count
+
+findings
+  ├─ id (uuid)
+  ├─ scan_id (fk)
+  ├─ type (enum: sqli, xss, idor, etc)
+  ├─ severity (enum: critical, high, medium, low)
+  ├─ description, remediation, evidence (json)
+  ├─ cvss_score (float 0-10)
+  └─ pr_generated (bool)
+
+domain_verifications
+  ├─ id (uuid)
+  ├─ scan_id (fk)
+  ├─ domain (string)
+  ├─ method (enum: dns, file, meta)
+  ├─ status (enum: pending, verified, failed)
+  └─ verified_at (timestamp)
+
+authorization_gates
+  ├─ id (uuid)
+  ├─ scan_id (fk)
+  ├─ q1-q7 (bool)
+  ├─ accepted_at (timestamp)
+  └─ ip_address
+```
+
+---
+
+## Design System (Apple-Inspired)
+
+### 🎨 Philosophy
+- **Clarity over decoration** — every pixel has purpose
+- **Minimalist aesthetic** — negative space is content
+- **Motion, not noise** — animations feel natural
+- **Dark-first** — eye comfort for long sessions
+- **Hierarchical depth** — subtle layering, no gradients
+
+### Color Palette
+
+```
+PRIMARY (Security Blue)
+  ├─ Deep: #0F172A (almost black, for text)
+  ├─ Base: #1E40AF (trust, security)
+  └─ Light: #3B82F6 (interactive)
+
+SEMANTIC (Status)
+  ├─ Success (Safe):    #10B981 (emerald)
+  ├─ Warning (Risky):   #F59E0B (amber)
+  ├─ Critical (Danger): #EF4444 (red)
+  └─ Neutral (Info):    #6B7280 (gray)
+
+BACKGROUNDS
+  ├─ Surface 0: #000000 (true black, minimal use)
+  ├─ Surface 1: #0F1117 (page bg, slightly warm)
+  ├─ Surface 2: #161B22 (card bg, elevated)
+  └─ Surface 3: #21262D (interactive bg, hover state)
+
+ACCENTS
+  ├─ Cyan:   #06B6D4 (highlights, differentiator)
+  └─ Violet: #7C3AED (secondary actions)
+
+TEXT
+  ├─ Primary:   #FFFFFF (high contrast)
+  ├─ Secondary: #D1D5DB (lower hierarchy)
+  └─ Tertiary:  #9CA3AF (disabled, hints)
+```
+
+### Typography
+
+```
+Font Stack: Inter (system) + SF Pro Display (headlines)
+
+Headlines
+  ├─ H1: 48px, 700 weight, 1.2 line-height, -1.5px tracking
+  ├─ H2: 36px, 600 weight, 1.25 line-height, -1px tracking
+  ├─ H3: 24px, 600 weight, 1.3 line-height, -0.5px tracking
+  └─ H4: 18px, 600 weight, 1.35 line-height, 0px tracking
+
+Body Text
+  ├─ Large: 16px, 400 weight, 1.5 line-height (content)
+  ├─ Base: 14px, 400 weight, 1.5 line-height (UI)
+  └─ Small: 12px, 400 weight, 1.4 line-height (labels)
+
+Monospace (for code)
+  └─ JetBrains Mono: 13px, 400 weight, 1.6 line-height
+
+Spacing Scale
+  ├─ xs: 2px
+  ├─ sm: 4px
+  ├─ md: 8px
+  ├─ lg: 16px
+  ├─ xl: 24px
+  ├─ 2xl: 32px
+  ├─ 3xl: 48px
+  └─ 4xl: 64px
+```
+
+### Component System
+
+```
+BUTTONS
+  ├─ Primary (blue background, white text)
+  ├─ Secondary (transparent, blue text, border)
+  ├─ Ghost (no background, no border, gray text)
+  ├─ Danger (red background, white text)
+  └─ Disabled (gray, opacity 50%)
+
+  Sizes: sm (32px), md (40px), lg (48px)
+  Hover: +5% brightness, scale 1.02
+  Active: scale 0.98, shadow-inset
+  Focus: outline 2px solid cyan
+
+CARDS
+  ├─ Default (Surface 2, subtle border)
+  ├─ Elevated (Surface 2, shadow-lg)
+  ├─ Interactive (hover → scale 1.02, glow cyan)
+  └─ Finding (color-coded left border by severity)
+
+  Padding: 24px
+  Border radius: 8px
+  Border: 1px solid #21262D
+  Backdrop: blur(10px) + opacity 95%
+
+INPUTS
+  ├─ Text input (Surface 2, border on focus)
+  ├─ Textarea (monospace for code)
+  ├─ Select (custom dropdown, keyboard nav)
+  └─ Toggle (blue when on, smooth animation)
+
+  Height: 40px
+  Padding: 0 12px
+  Border: 1px solid #21262D
+  Focus: border cyan, shadow-glow
+  Filled: Background #21262D
+
+BADGES
+  ├─ Status: Green (secure), Yellow (warning), Red (critical)
+  ├─ Severity: Colored dot + text
+  ├─ Size: 24px badge + label
+  └─ Animation: pulse on severity > high
+
+PROGRESS
+  ├─ Linear bar (for scan progress)
+  ├─ Circular (for percentage)
+  └─ Animated: gradient moving left-to-right (smooth)
+
+MODALS
+  ├─ Backdrop: blur(4px) + #000000 opacity 60%
+  ├─ Dialog: Surface 2, shadow-xl
+  ├─ Animation: fade-in + scale-up (spring)
+  └─ Close: ESC key or X button (top-right)
+```
+
+---
+
+## UI/UX & Micro-Interactions
+
+### 🎬 Micro-Interaction Philosophy
+
+**Principle:** Every interaction should feel responsive, feedback should be instant, motion should have purpose.
+
+```
+Interaction → Visual Feedback → Confirmation
+     100ms          200ms            400ms
+```
+
+### Hover Effects (Unified)
+
+```
+BUTTONS
+  Hover: 
+    - Background brightness +8%
+    - Scale: 1.02 (subtle lift)
+    - Shadow: add 8px blur shadow
+    - Duration: 200ms (ease-out)
+
+  Active:
+    - Scale: 0.98 (press down)
+    - Shadow: inset 0 4px 8px rgba(0,0,0,0.3)
+    - Duration: 100ms
+
+CARDS (Interactive)
+  Hover:
+    - Border color: cyan
+    - Box-shadow: 0 0 20px rgba(6, 182, 212, 0.3)
+    - Scale: 1.02
+    - Translate Y: -2px
+    - Duration: 300ms (ease-out)
+
+  Links inside card:
+    - Underline appears (animated)
+    - Color: cyan
+
+INPUTS
+  Focus:
+    - Border: cyan (2px)
+    - Glow: 0 0 12px rgba(6, 182, 212, 0.4)
+    - Background: lighten 1%
+    - Duration: 150ms
+
+  Typing:
+    - Cursor animation: blink-slow (500ms)
+    - Text color: gradually to cyan if valid
+
+ICONS
+  Hover:
+    - Color: primary (blue)
+    - Rotate: 5-10deg (subtle)
+    - Scale: 1.1
+    - Duration: 200ms
+
+  Loading states:
+    - Spin: continuous 2s rotation
+    - Opacity: pulsing 0.6 → 1.0
+```
+
+### Loading States (Unique)
+
+```
+SCAN PROGRESS ANIMATION
+  Phase 1: Initialization
+    ├─ Small dots move from left → right in a line
+    ├─ Opacity: 1 → 0 (fading out)
+    └─ Speed: 800ms loop
+
+  Phase 2: Testing (Active)
+    ├─ Multiple circles orbiting a central core
+    ├─ Each circle represents a test (SQLi, XSS, IDOR, etc)
+    ├─ Colors: blue base, highlight current testing
+    └─ Speed: 1200ms per orbit
+
+  Phase 3: Analyzing (Claude thinking)
+    ├─ Vertical bars rising/falling like equalizer
+    ├─ Colors: blue → cyan gradient
+    └─ Speed: variable (2-4s total)
+
+FINDING APPEARED
+  ├─ Entrance: slide-in from right + fade-in
+  ├─ Stagger: each finding 100ms apart
+  ├─ Icon: rotate 360° on entrance
+  └─ Color: severity-coded glow for 1s
+```
+
+### Form Interactions
+
+```
+INPUT VALIDATION (Real-time)
+  Valid URL entered:
+    ├─ Checkmark icon appears (fade-in)
+    ├─ Border turns green (200ms transition)
+    ├─ Glow effect (0 0 8px rgba(16, 185, 129, 0.3))
+    └─ Submit button becomes enabled
+
+  Invalid URL:
+    ├─ X icon appears (red)
+    ├─ Shake animation (amplitude: 4px, duration: 200ms)
+    ├─ Error message slides up (fade-in + translate-y)
+    └─ Submit button disabled
+
+FORM SUBMISSION
+  ├─ Button text: "Scanning..." (fade-in)
+  ├─ Button: disable, show spinner
+  ├─ Progress bar appears below (enter from left)
+  └─ Form fields: slightly fade (opacity 80%)
+```
+
+### Notification Toasts
+
+```
+Toast appears (bottom-right):
+  ├─ Entrance: slide-in from bottom-right + fade-in (300ms)
+  ├─ Background: Surface 2 + subtle glow
+  ├─ Icon: rotate 180° as it enters
+  ├─ Auto-dismiss: 5s (with 1s fade-out)
+  └─ Manual close: click or ESC
+
+Types:
+  ├─ Success (green): "✓ Scan saved"
+  ├─ Error (red): "✗ Domain verification failed"
+  ├─ Info (blue): "ℹ️ Scan in progress..."
+  └─ Warning (yellow): "⚠ 3 critical findings"
+```
+
+---
+
+## Pages & Screens
+
+### 📄 Page 1: Landing Page (Home)
+
+**Hero Section:**
+```
+┌─────────────────────────────────────────────────────────┐
+│                                                         │
+│              SOMA SHIELD                                │
+│              Find vulnerabilities                       │
+│              before they find you                       │
+│                                                         │
+│              [Get Started] [See Demo]                   │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+
+Scroll effects:
+  ├─ Hero text: parallax (moves slower than scroll)
+  ├─ Background: subtle gradient shift (follows mouse)
+  ├─ Buttons: scale + glow on hover
+  └─ Scroll indicator: animated arrow pulsing down
+```
+
+**Section 2: Features Showcase**
+```
+┌────────────┬────────────┬────────────┐
+│   Risk     │  Findings  │   Auto-    │
+│  Scoring   │  Details   │    Fix     │
+│            │            │     PRs    │
+│ (animated  │ (cards      │ (GitHub    │
+│  number    │  flip on    │  integration)
+│  counter)  │  hover)    │            │
+└────────────┴────────────┴────────────┘
+
+Scroll effects:
+  ├─ Cards: fade-in + slide-up as they enter viewport
+  ├─ Icons: rotate + scale on entrance
+  ├─ Text: stagger animation (word by word)
+  └─ Counters: animate from 0 to final value
+```
+
+**Section 3: How It Works (Diagram)**
+```
+     URL Input
+        ↓
+     ┌─────────────────┐
+     │ DAST Scanning   │ ← Animated scan waves
+     │ (30 seconds)    │
+     └─────────────────┘
+        ↓
+     ┌─────────────────┐
+     │ Claude Analysis │ ← Thinking animation (AI glow)
+     │ (findings)      │
+     └─────────────────┘
+        ↓
+     ┌─────────────────┐
+     │ Risk Score      │ ← Number animates up (0→100)
+     │ + PR Generated  │
+     └─────────────────┘
+
+Animation:
+  ├─ Arrows: bounce between boxes
+  ├─ Boxes: glow when active
+  └─ Timeline: progress bar at top
+```
+
+**Section 4: Pricing**
+```
+┌───────────┬───────────┬───────────┐
+│   Free    │    Pro    │Enterprise │
+├───────────┼───────────┼───────────┤
+│ $0/mo     │ $99/mo    │  Custom   │
+│           │           │           │
+│ 1 scan    │ 50 scans  │ Unlimited │
+│ per month │ per month │           │
+└───────────┴───────────┴───────────┘
+
+Hover effect:
+  ├─ Pro card: scale 1.05, glow cyan, move up 4px
+  ├─ Background: blur increases
+  └─ Button: highlight + border glow
+```
+
+**Section 5: CTA (Call-to-Action)**
+```
+┌─────────────────────────────────────┐
+│  Ready to secure your application?  │
+│                                     │
+│     [Start Free Scanning]           │
+│                                     │
+│  No credit card required            │
+└─────────────────────────────────────┘
+
+Animation:
+  ├─ Section: fade-in as user scrolls
+  ├─ Button: breathe effect (scale pulse 1.0 → 1.05)
+  └─ Background: subtle animated gradient
+```
+
+---
+
+### 📄 Page 2: Dashboard (Main App)
+
+**Header (Fixed Top)**
+```
+┌──────────────────────────────────────────────────────────┐
+│ ≡ Soma Shield    Search    ⚙️ Settings    👤 Profile    │
+└──────────────────────────────────────────────────────────┘
+```
+
+**Left Sidebar (Collapsible)**
+```
+┌──────────────┐
+│ ≡ SOMA       │
+│              │
+│ 🏠 Dashboard │
+│ 🔍 New Scan  │
+│ 📊 Reports   │
+│ ⚙️  Settings  │
+│              │
+│ Usage:       │
+│ ████░░░░░░   │ 4/50 scans
+│              │
+│ Upgrade Pro  │
+└──────────────┘
+```
+
+**Main Content Area (Stats Cards)**
+```
+┌─────────────────────────────────────────────────────┐
+│                                                     │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐          │
+│  │   128    │  │   1.2k   │  │    82%   │          │
+│  │  Scans   │  │ Findings │  │  Secure  │          │
+│  │ This Mo. │  │  Fixed   │  │   Apps   │          │
+│  └──────────┘  └──────────┘  └──────────┘          │
+│                                                     │
+│  Animation:                                         │
+│  ├─ Numbers: counter animation (0 → final)         │
+│  ├─ Cards: fade-in on page load                    │
+│  └─ Trend arrows: color + micro-motion             │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+**Recent Scans (Table with Live Updates)**
+```
+┌────────────────────────────────────────────────────────┐
+│ Recent Scans                          [New Scan]      │
+├────────────────────────────────────────────────────────┤
+│ Target      Status    Risk    Findings  Date           │
+├────────────────────────────────────────────────────────┤
+│ app.com     ✓ Done    72 🔴   3 Critical  2h ago      │
+│ api.co      ⟳ Running 45 🟡   —          now         │
+│ web.io      ✓ Done    12 🟢   0          1d ago      │
+│ shop.app    ✗ Failed  —       —          3d ago      │
+└────────────────────────────────────────────────────────┘
+
+Animations:
+  ├─ Running scan: animated loading spinner in status
+  ├─ Risk score: color transitions (red/yellow/green)
+  ├─ Findings link: hover → scale + glow
+  └─ New scan appears: slide-in from top + glow
+```
+
+**Quick Action (Floating Action Button)**
+```
+Bottom-right corner:
+  ┌────────┐
+  │ ➕ Scan  │  
+  └────────┘
+  
+  On hover:
+    ├─ Scale: 1.1
+    ├─ Shadow: 0 8px 24px rgba(59, 130, 246, 0.4)
+    ├─ Rotate: 45deg (slowly)
+    └─ Menu appears (slide-up) with options:
+       ├─ Scan URL
+       ├─ Upload Report
+       └─ Import Findings
+```
+
+---
+
+### 📄 Page 3: Scan Page (Live Execution)
+
+**Scan Setup (Step 1: URL Input)**
+```
+┌───────────────────────────────────────┐
+│                                       │
+│   Scan Configuration                  │
+│                                       │
+│   Target URL                          │
+│   [https://app.com            ] ✓     │
+│                                       │
+│   Scan Type                           │
+│   ◉ Full Scan (DAST + Tech Stack)     │
+│   ○ DAST Only                         │
+│   ○ Quick Scan (30 seconds)           │
+│                                       │
+│   [← Back]  [Start Scan →]            │
+│                                       │
+└───────────────────────────────────────┘
+
+Animations:
+  ├─ Input focus: glow effect
+  ├─ Validation: checkmark appears (fade + scale)
+  └─ Button: pulse on hover (breathing effect)
+```
+
+**Scan Running (Step 2: Live Progress)**
+```
+┌─────────────────────────────────────────────────┐
+│                                                 │
+│  Scanning: https://app.com                      │
+│                                                 │
+│  Progress: ████████░░░░░░░░░░  35%              │
+│  Time Elapsed: 0:15 / ~1:00                     │
+│                                                 │
+│  ┌──────────────────────────────────────────┐   │
+│  │ Tests Running:                           │   │
+│  │ ✓ SQL Injection       (4 payloads)       │   │
+│  │ → XSS Testing         (7 payloads)       │   │
+│  │ ⟳ Authentication      (3 tests)          │   │
+│  │ ○ IDOR                (pending)          │   │
+│  │ ○ CSRF                (pending)          │   │
+│  └──────────────────────────────────────────┘   │
+│                                                 │
+│  [⏸ Pause]  [⏹ Cancel]  [🔊 Notifications]    │
+│                                                 │
+└─────────────────────────────────────────────────┘
+
+Animations:
+  ├─ Progress bar: smooth gradient animation
+  ├─ Current test: scale + color highlight
+  ├─ Completed test: checkmark rotates in
+  └─ Time counter: update every 1s
+```
+
+**Logs Stream (Right sidebar, auto-scroll)**
+```
+┌─────────────────────────────────────┐
+│ Scan Logs (Real-time)               │
+├─────────────────────────────────────┤
+│ [00:00] 🔍 Initializing scan...     │
+│ [00:02] ✓ Resolved DNS: 1.2.3.4    │
+│ [00:05] ✓ Connected to server       │
+│ [00:07] 🧪 Testing SQL Injection... │
+│ [00:12] ⚠️  VULNERABILITY FOUND      │
+│         SQL Injection detected      │
+│         Endpoint: /api/users        │
+│ [00:14] 🧪 Testing XSS...          │
+│ [00:18] ✓ XSS protected             │
+│ [00:20] 🧪 Testing IDOR...         │
+│ [00:28] ⚠️  VULNERABILITY FOUND      │
+│         Auth Bypass possible        │
+│                                     │
+│ ↓ Auto-scroll enabled              │
+└─────────────────────────────────────┘
+
+Animations:
+  ├─ New log: fade-in + typewriter effect (50ms per char)
+  ├─ Alert logs: red background flash (200ms)
+  ├─ Success logs: green checkmark rotates in
+  └─ Auto-scroll: smooth scroll to bottom
+```
+
+**Scan Complete (Step 3: Results)**
+```
+┌─────────────────────────────────────────────────┐
+│                                                 │
+│  Scan Complete ✓                                │
+│                                                 │
+│        Risk Score                               │
+│        ┌───────────────────────┐                │
+│        │        72             │ ← Big number   │
+│        │    MEDIUM RISK        │   with glow    │
+│        └───────────────────────┘                │
+│                                                 │
+│  Breakdown:                                     │
+│  🔴 Critical:  3 findings                       │
+│  🟠 High:      8 findings                       │
+│  🟡 Medium:   15 findings                       │
+│  🟢 Low:       2 findings                       │
+│                                                 │
+│  Time to Scan: 1m 42s                           │
+│  Confidence:   94% (strong evidence)            │
+│                                                 │
+│  [View Details] [Generate PR] [Export PDF]     │
+│                                                 │
+└─────────────────────────────────────────────────┘
+
+Animations:
+  ├─ Risk score number: counter animation (0 → 72)
+  ├─ Number color: transitions red/yellow/green
+  ├─ Ring around score: animated glow pulse
+  ├─ Findings breakdown: bars animate up
+  └─ Buttons: slide-up on entrance + glow hover
+```
+
+---
+
+### 📄 Page 4: Findings Detail Page
+
+**Finding Card (Single Vulnerability)**
+```
+┌────────────────────────────────────────────────┐
+│                                                │
+│  SQL Injection  🔴 CRITICAL                    │
+│  CVSS Score: 9.8                              │
+│                                                │
+│  ┌────────────────────────────────────────┐   │
+│  │ Endpoint: POST /api/users               │   │
+│  │ Parameter: email                        │   │
+│  │ Status: EXPLOITABLE                    │   │
+│  │ Confidence: 98%                         │   │
+│  └────────────────────────────────────────┘   │
+│                                                │
+│  Description                                   │
+│  ┌────────────────────────────────────────┐   │
+│  │ User input in 'email' parameter is     │   │
+│  │ directly concatenated into SQL query   │   │
+│  │ without sanitization or parameterized  │   │
+│  │ statements. Attacker can inject SQL    │   │
+│  │ to extract all user records.           │   │
+│  └────────────────────────────────────────┘   │
+│                                                │
+│  Evidence                                      │
+│  Request:                                     │
+│  POST /api/users HTTP/1.1                     │
+│  Host: app.com                                │
+│  email=test' OR '1'='1                        │
+│                                                │
+│  Response (200 OK):                           │
+│  [5000 user records returned]                 │
+│                                                │
+│  Proof of Concept                             │
+│  [View POC Video]  [Download Payload File]    │
+│                                                │
+│  Remediation                                   │
+│  Use parameterized queries:                   │
+│  ┌────────────────────────────────────────┐   │
+│  │ query = "SELECT * FROM users           │   │
+│  │          WHERE email = ?"              │   │
+│  │ execute(query, [user_email])           │   │
+│  └────────────────────────────────────────┘   │
+│                                                │
+│  Related                                       │
+│  CWE: CWE-89 (SQL Injection)                  │
+│  OWASP: A03:2021 – Injection                  │
+│  CVE: CVE-2023-1234                           │
+│                                                │
+│  Actions                                       │
+│  [Create PR] [Add to Ignore List] [Share]     │
+│                                                │
+└────────────────────────────────────────────────┘
+
+Animations:
+  ├─ Card entrance: slide-up + fade-in
+  ├─ Severity badge: rotate 360° on entrance
+  ├─ CVSS score: number counter animation
+  ├─ Code blocks: syntax highlighting fade-in
+  ├─ POC button: hover scale + glow
+  └─ Action buttons: stagger entrance (each 100ms apart)
+```
+
+---
+
+## Animation & Motion Language
+
+### 🎬 Core Animation Principles
+
+```
+Timing Curves:
+  ├─ Entrance: ease-out (fast start, slow end) — feels alive
+  ├─ Exit: ease-in (slow start, fast end) — feels purposeful
+  ├─ Hover: cubic-bezier(0.34, 1.56, 0.64, 1) — bouncy spring
+  └─ Loading: linear (for continuous)
+
+Duration Guide:
+  ├─ Micro (feedback): 100-150ms
+  ├─ Short (UI): 200-300ms
+  ├─ Medium (attention): 400-600ms
+  └─ Long (storytelling): 800ms+
+
+Trigger:
+  ├─ Scroll: intersection observer + delay per item
+  ├─ Hover: instant (0ms delay)
+  ├─ Click: feedback immediate, then transition
+  └─ Load: stagger children (offset: index × 50ms)
+```
+
+### Animation Library Setup
+
+```typescript
+// Framer Motion (React component animation)
+import { motion } from 'framer-motion'
+
+// GSAP (complex sequences, timeline)
+import gsap from 'gsap'
+import ScrollTrigger from 'gsap/ScrollTrigger'
+
+// Tailwind CSS (utility animations)
+// Custom keyframes in tailwind.config.js
+```
+
+### Specific Animations
+
+**1. Finding Entrance (Staggered Children)**
+```javascript
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { type: 'spring', stiffness: 100 }
+  }
+}
+```
+
+**2. Risk Score Counter (GSAP)**
+```javascript
+gsap.to('.risk-score', {
+  innerHTML: 72,
+  duration: 2,
+  snap: { innerHTML: 1 },
+  ease: 'power2.out',
+  onUpdate() {
+    // Update color based on value
+    const value = parseInt(this.targets()[0].innerHTML)
+    if (value > 60) classList.add('text-red')
+  }
+})
+```
+
+**3. Progress Bar (Tailwind + Custom)**
+```html
+<div class="relative h-1 bg-gray-800 rounded overflow-hidden">
+  <div class="h-full bg-gradient-to-r from-blue-500 to-cyan-500 
+              animate-progress-slide"></div>
+</div>
+
+<!-- In tailwind.config.js -->
+keyframes: {
+  'progress-slide': {
+    '0%': { transform: 'translateX(-100%)', width: '100%' },
+    '100%': { transform: 'translateX(100%)', width: '100%' }
+  }
+}
+```
+
+**4. Scroll Parallax (Landing Page)**
+```javascript
+gsap.registerPlugin(ScrollTrigger)
+
+gsap.utils.toArray('.parallax').forEach((element) => {
+  gsap.to(element, {
+    y: -100,
+    scrollTrigger: {
+      trigger: element,
+      start: 'top center',
+      end: 'bottom center',
+      scrub: 1 // smooth scrubbing
+    }
+  })
+})
+```
+
+**5. Hover Glow (CSS + JS)**
+```css
+.card-interactive {
+  transition: all 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 0 0 rgba(6, 182, 212, 0);
+}
+
+.card-interactive:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+  border-color: rgb(6, 182, 212);
+}
+```
+
+---
+
+## Implementation Roadmap
+
+### Phase 1: Foundation (Weeks 1-2)
+- [x] Design system setup (colors, typography, components)
+- [x] Component library (buttons, cards, inputs, modals)
+- [x] Layout system (sidebar, header, responsive)
+- [x] Animation library integration (Framer Motion + GSAP)
+
+### Phase 2: Core Pages (Weeks 3-4)
+- [ ] Landing page (hero, features, pricing, CTA)
+- [ ] Dashboard (stats, recent scans, quick actions)
+- [ ] Scan form (URL input, validation)
+- [ ] Findings list (cards, filtering, sorting)
+
+### Phase 3: Interactivity (Weeks 5-6)
+- [ ] Scroll animations (parallax, fade-in on scroll)
+- [ ] Hover effects (all interactive elements)
+- [ ] Form validation (real-time, with feedback)
+- [ ] Loading states (spinner, skeleton screens)
+
+### Phase 4: Real Backend Integration (Weeks 7-8)
+- [ ] API connection (scan creation, fetching findings)
+- [ ] WebSocket setup (real-time logs)
+- [ ] Error handling (toasts, error states)
+- [ ] Authentication (GitHub OAuth)
+
+### Phase 5: Polish & Deploy (Weeks 9-10)
+- [ ] Performance optimization (code splitting, lazy loading)
+- [ ] Browser testing (Chrome, Safari, Firefox)
+- [ ] Accessibility audit (WCAG 2.1 AA)
+- [ ] Deploy to Vercel (frontend) + Heroku (backend)
+
+---
+
+## Success Criteria
+
+**Design:**
+- ✅ Loads in <2s (LCP)
+- ✅ All animations 60fps
+- ✅ Dark mode by default
+- ✅ Mobile responsive (320px+)
+- ✅ Accessibility WCAG 2.1 AA
+
+**UX:**
+- ✅ Scan starts in <3 clicks
+- ✅ Results visible in <2 minutes
+- ✅ PR auto-generated in <10 seconds
+- ✅ No confusing states (always clear what's happening)
+
+**Technical:**
+- ✅ Zero third-party animations (self-hosted)
+- ✅ TypeScript (100% type coverage)
+- ✅ Component library documented (Storybook)
+- ✅ E2E tests (Cypress) for critical flows
+
+---
+
+## References
+
+- Design inspiration: Apple.com, Linear.app, Stripe.com
+- Animation inspiration: Framer.com, Prisma.io
+- Color palette: Tailwind CSS default + custom tweaks
+- Typography: Inter (system font), SF Pro Display (headlines)
+
+---
+
+**Document Version:** 1.0  
+**Last Updated:** 2026-07-18  
+**Author:** Product Team  
+**Status:** Ready for Implementation

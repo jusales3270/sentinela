@@ -1,0 +1,389 @@
+# Soma Shield / StrixGuard — Security Roadmap
+## Implementações Futuras (Post-MVP, Pré-Deploy)
+
+**Data:** 2026-07-17  
+**Status:** Planning Phase  
+**Continuação de:** [plan.md](Kimi_Agent_Construção%20de%20IA%20Autônoma/plan.md) — Stage 5 (Integração e Deploy)
+
+---
+
+## Context: Market Positioning
+
+O Soma Shield evolui de **"Pentest Platform"** para **"Security Intelligence Platform"** com três camadas de serviços:
+
+```
+Core:     Automated vulnerability scanning (URL-based + code analysis)
++Module:  Assisted incident response (PR generation + approval workflow)
++Premium: Enterprise risk management (compliance, vendor assessment, training)
+```
+
+---
+
+## Stage 6: Security Risk Scoring (MVP Phase)
+
+### 6.1 Discovery Engine
+**Objetivo:** Mapear aplicação alvo sem acesso ao código.
+
+**Componentes:**
+```
+├─ URL Analyzer
+│  ├─ Tech stack detection (Wappalyzer integration)
+│  ├─ Endpoint discovery (aggressive crawl)
+│  └─ Headers analysis (server version, security headers)
+│
+├─ DAST (Dynamic Application Security Testing)
+│  ├─ SQL Injection payloads
+│  ├─ XSS vectors
+│  ├─ Auth bypass attempts
+│  ├─ CSRF token validation
+│  └─ Rate limiting detection
+│
+└─ Source Code Analysis (se disponível via Git)
+   ├─ SAST via security-review skill
+   ├─ Dependency scanning (npm/pip vulns)
+   └─ Data flow tracing (Claude API)
+```
+
+**Backend (Python/FastAPI):**
+```python
+# POST /api/v1/scan/create
+{
+  "url": "https://app.exemplo.com",
+  "scan_type": "full|dast|sast",  # full = DAST + discovery
+  "include_git": true,            # git clone + analyze
+  "webhook": "https://..."        # notify on complete
+}
+
+# Background job:
+# 1. Crawl endpoints
+# 2. Run DAST payloads (async)
+# 3. Analyze responses via Claude
+# 4. Generate risk score
+# 5. Store findings in DB
+```
+
+**Frontend:**
+```
+Dashboard → Input URL → Progress bar
+         → Results: Risk Score (0-100)
+         → Vulnerability list (severity, description, impact)
+         → Export (PDF report)
+```
+
+### 6.2 Risk Scoring Algorithm
+**Modelo:** CVSS-based + Custom weights
+
+```
+Risk Score = (
+  0.30 * Critical_Count * 10 +
+  0.25 * High_Count * 7 +
+  0.20 * Medium_Count * 4 +
+  0.15 * Low_Count * 1 +
+  0.10 * HelthScore (headers, certs, etc)
+) / 100
+```
+
+**Output:**
+```
+{
+  "risk_score": 72,           # 0-100
+  "severity_distribution": {
+    "critical": 2,
+    "high": 5,
+    "medium": 12,
+    "low": 8
+  },
+  "findings": [
+    {
+      "id": "sql-injection-01",
+      "title": "SQL Injection em /api/users",
+      "severity": "critical",
+      "cve": "...",
+      "description": "...",
+      "evidence": "payload: ' OR 1=1 --",
+      "remediation": "Use parameterized queries",
+      "cost_to_fix": "low",  # low, medium, high
+      "exploitability": 0.95
+    }
+  ],
+  "compliance_status": {
+    "owasp_top_10": ["A03:Injection", "A01:BrokenAuth"],
+    "cis_critical": 3
+  }
+}
+```
+
+### 6.3 Pricing Model
+```
+┌─────────────┬──────────┬──────────┬──────────────┐
+│ Tier        │ Scans/mês│ History  │ Price        │
+├─────────────┼──────────┼──────────┼──────────────┤
+│ Free        │ 1        │ 7 days   │ $0           │
+│ Pro         │ 50       │ 90 days  │ $99/mês      │
+│ Business    │ 250      │ 1 year   │ $299/mês     │
+│ Enterprise  │ ∞        │ ∞        │ Custom       │
+└─────────────┴──────────┴──────────┴──────────────┘
+
+Monetization:
+- 70% margin (cloud cost ~30%)
+- Target: 100 paying customers by end of Q3
+- LTV: $2,970 (30 mês average)
+```
+
+---
+
+## Stage 7: Assisted Incident Response (Post-MVP)
+
+### 7.1 Patch Generation Engine
+
+**Workflow:**
+```
+Finding detected
+    ↓
+Claude analyzes vulnerability context
+    ↓
+Generates fix suggestion (code patch)
+    ↓
+Creates PR with:
+      ├─ Proposed code changes
+      ├─ Automated tests
+      ├─ Explanation (why vulnerable)
+      └─ Rollback instructions
+    ↓
+User reviews + approves
+    ↓
+Optional: Automated deploy (staging only)
+```
+
+**Backend Flow:**
+```python
+# POST /api/v1/incident/auto-fix
+{
+  "finding_id": "sql-injection-01",
+  "repo_url": "https://github.com/user/app",
+  "branch": "main",
+  "approval_required": true
+}
+
+# System:
+# 1. Clone repo
+# 2. Locate vulnerable code (file + line from SAST)
+# 3. Claude generates patch (via AI SDK)
+# 4. Run tests against patch
+# 5. Create PR (GitOps)
+# 6. Notify team (Slack webhook)
+```
+
+**Example PR Generated:**
+```markdown
+## 🔒 Security Fix: SQL Injection (Critical)
+
+**Finding:** SQL injection in `/app/routes/users.py:45`
+
+### What's wrong?
+User input directly concatenated into SQL query:
+```python
+query = f"SELECT * FROM users WHERE id = {user_id}"
+```
+Attacker can run: `1 OR 1=1 --` → dumps entire DB.
+
+### How we fix it?
+Use parameterized queries (prevents SQL parsing):
+```python
+query = "SELECT * FROM users WHERE id = ?"
+execute(query, [user_id])
+```
+
+### Risk Level
+- **Severity:** Critical (CVSS 9.8)
+- **Exploitability:** Very easy (no auth needed)
+- **Time to fix:** < 5 min
+- **Test coverage:** 98%
+
+### Rollback
+If issue: `git revert <commit-sha>`
+
+---
+Generated by Soma Shield Security • Reviewed by [Claude Opus 4.8]
+```
+
+### 7.2 Risk-Based Automation
+```
+Severity → Action
+
+CRITICAL  → Auto-create PR + Slack urgent alert
+HIGH      → Auto-create PR + email team
+MEDIUM    → Create PR (manual approval)
+LOW       → Log only (weekly digest)
+```
+
+### 7.3 Pricing
+```
+Add-on to Risk Scoring:
+- Auto-PR generation: +$299/mês (Pro+)
+- Unlimited PRs: +$499/mês (Enterprise)
+- SLA 4-hour response: +$999/mês (Premium Enterprise)
+```
+
+---
+
+## Stage 8: Enterprise Features (Future)
+
+### 8.1 Compliance Automation
+```
+Checks:
+├─ SOC2 readiness
+├─ GDPR compliance (data handling)
+├─ HIPAA (if healthcare)
+├─ PCI-DSS (if payments)
+└─ ISO 27001 readiness
+
+Output: Compliance report + roadmap to certification
+```
+
+### 8.2 Vendor Risk Management
+```
+Third-party assessment:
+├─ Dependency vulnerability tracking
+├─ License compliance (GPL, MIT, etc)
+├─ Supply chain risk scoring
+└─ Automated alerts on new CVEs
+```
+
+### 8.3 Security Training
+```
+Per-finding education:
+├─ Why this vulnerability matters
+├─ How to test for it manually
+├─ Industry benchmarks ("you're in 25th percentile")
+└─ Interactive fix tutorial (video/interactive)
+```
+
+### 8.4 Bug Bounty Integration
+```
+Partnerships:
+├─ HackerOne
+├─ Intigriti
+├─ Bugcrowd
+
+Platform feature:
+├─ Auto-create bounty when critical found
+├─ Managed disclosure workflow
+└─ Hunter reputation integration
+```
+
+---
+
+## Implementation Roadmap
+
+### Timeline: Next 6 Months
+
+```
+Month 1-2 (Aug-Sep 2026):
+├─ [CRITICAL] Stage 6.1: Discovery engine
+├─ [CRITICAL] Stage 6.2: Risk scoring algorithm
+├─ [CRITICAL] Stage 6.3: Pricing setup (Stripe integration)
+└─ Alpha: Internal testing + 5 beta customers
+
+Month 3 (Oct 2026):
+├─ [HIGH] Public launch (Risk Scoring)
+├─ [HIGH] Sales + marketing (Product Hunt, HN)
+├─ [HIGH] Support + onboarding
+└─ Target: 50+ paying customers
+
+Month 4-5 (Nov-Dec 2026):
+├─ [MEDIUM] Stage 7: Assisted incident response
+├─ [MEDIUM] PR automation + GitOps integration
+├─ [MEDIUM] Slack/Teams notifications
+└─ Beta: Enterprise testing
+
+Month 6 (Jan 2027):
+├─ [LOW] Polish + bug fixes
+├─ [LOW] Documentation + API docs
+├─ [LOW] Consider Stage 8 features (based on demand)
+└─ Target: $10k MRR
+```
+
+---
+
+## Technical Debt & Prerequisites
+
+**Before Launch (Stage 6):**
+- [ ] Database schema for findings (PostgreSQL)
+- [ ] Job queue for async scans (Celery or similar)
+- [ ] Cache layer (Redis for results)
+- [ ] Rate limiting (DDoS protection)
+- [ ] API authentication (JWT + API keys)
+- [ ] Webhooks system (for notifications)
+- [ ] Audit logging (compliance)
+
+**Before Stage 7:**
+- [ ] GitHub/GitLab OAuth integration
+- [ ] Repo access management
+- [ ] PR template system
+- [ ] Test runner integration
+- [ ] Deployment safety checks
+
+**Before Stage 8:**
+- [ ] Compliance database (SOC2, GDPR mappings)
+- [ ] Analytics + reporting
+- [ ] Multi-tenant isolation
+- [ ] SLA management
+
+---
+
+## Success Metrics
+
+### MVP (Stage 6):
+- 50+ free accounts
+- 10 paying customers
+- <30s scan time (DAS only)
+- 95%+ accuracy on known CVEs
+
+### Post-Launch (Stage 7):
+- 100+ paying customers
+- $10k MRR
+- 50%+ of PRs auto-generated
+- <4h avg remediation time
+
+### Year 1 (Stage 8):
+- 500+ paying customers
+- $50k MRR
+- Enterprise partnerships
+- >70% customer retention
+
+---
+
+## Decisions to Make
+
+**Before Moving Forward:**
+
+1. **Prioritization:**
+   - [ ] Risk Scoring only (MVP focus)
+   - [ ] Risk Scoring + Assisted Response (aggressive)
+   - [ ] Full stack (enterprises from day 1)
+
+2. **Tech Stack:**
+   - [ ] Keep FastAPI backend (recommended)
+   - [ ] Switch to Node/Vercel Functions (faster)
+   - [ ] Hybrid (Node frontend API + Python workers)
+
+3. **Legal/Compliance:**
+   - [ ] Conservative model (reports only, no fixes)
+   - [ ] Assisted model (PR generation, user approval)
+   - [ ] Aggressive model (auto-fix in staging)
+
+4. **Go-to-Market:**
+   - [ ] B2B SaaS (outbound sales to dev teams)
+   - [ ] Freemium + marketing (inbound, free tier)
+   - [ ] Enterprise-first (sales team)
+
+---
+
+## Related Documents
+- [Stage Plan (Original)](Kimi_Agent_Construção%20de%20IA%20Autônoma/plan.md)
+- [Soma Shield Project Memory](.claude/projects/.../memory/soma-shield-project.md)
+
+---
+
+**Next Step:** Align on prioritization + tech decisions, then start Stage 6.1 implementation.
