@@ -1,0 +1,1 @@
+# StrixGuard Backend Application
