@@ -96,7 +96,15 @@ def create_user(db: Session, username: str, password: str, email: Optional[str] 
 
 
 def ensure_default_user(db: Session) -> None:
-    """Ensure the default demo user exists (admin/admin)."""
+    """Ensure the default demo user exists (admin/admin) — ONLY in MOCK mode.
+
+    SECURITY: Never create default credentials in production.
+    This function only runs if MOCK_MODE=true in settings.
+    """
+    if not settings.mock_mode:
+        # In production, do NOT create default users
+        return
+
     default_user = get_user_by_username(db, "admin")
     if not default_user:
         create_user(db, "admin", "admin", "admin@strixguard.local")
